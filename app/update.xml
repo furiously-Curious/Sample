@@ -1,0 +1,7 @@
+<AppUpdater>
+    <update>
+        <latestVersion>3.0</latestVersion>
+        <latestVersionCode>3</latestVersionCode>
+        <url>https://github.com/furiously-Curious/Sample/releases</url>
+    </update>
+</AppUpdater>
