@@ -3,11 +3,17 @@ package com.example.sample
 import android.Manifest
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -26,42 +32,61 @@ class MainActivity : AppCompatActivity() {
     }
 
     lateinit var downloadController: DownloadController
+
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+        //val isLatest = isLatestVersion(version)
+
+
+
+
+        setContentView(R.layout.activity_main)
+        // This apk is taking pagination sample app
+
+        val apkUrl = "https://github.com/furiously-Curious/SampleAPK/raw/main/Sample.apk"
+        downloadController = DownloadController(this, apkUrl)
+        updateAppIfAvailable()
+
+        findViewById<Button>(R.id.buttonDownload).setOnClickListener {
+            Toast.makeText(applicationContext, "Tapped on the dummy button", Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun updateAppIfAvailable() {
+        val apkVersionUrl =
+            "https://raw.githubusercontent.com/furiously-Curious/SampleAPKConfig/main/SampleAppVersion.json"
+
+        val request = StringRequest(apkVersionUrl, Response.Listener<String> {
+            val apkVersionJson = JSONObject(it)
+            Log.i("info", it)
+            if(!isLatestVersion(apkVersionJson.getLong("latestVersionCode"))) {
+                checkStoragePermission()
+            }
+        }, Response.ErrorListener {
+            Toast.makeText(applicationContext, "Some error occurred!!", Toast.LENGTH_SHORT).show();
+            Log.e("Error", "Error fetching data ${it.message}")
+        });
+
+        Volley.newRequestQueue(this).add(request);
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun isLatestVersion(latestVersion: Long): Boolean{
         val manager: PackageManager = this.packageManager
         val info: PackageInfo = manager.getPackageInfo(
             this.packageName, 0
         )
         val version = info.longVersionCode
         Log.i("info", "!!!App current version $version ")
-        val isLatest = isLatestVersion(version)
-
-
-
-        setContentView(R.layout.activity_main)
-        // This apk is taking pagination sample app
-        val apkUrl = "https://github.com/furiously-Curious/SampleAPK/raw/main/Sample.apk"
-        downloadController = DownloadController(this, apkUrl)
-        findViewById<Button>(R.id.buttonDownload).setOnClickListener {
-            // check storage permission granted if yes then start downloading file
-            checkStoragePermission()
-        }
+        return (latestVersion == version)
     }
 
-    private fun isLatestVersion(currentVersion: Long): Boolean{
-        val apkVersionUrl =
-            "https://raw.githubusercontent.com/furiously-Curious/SampleAPKConfig/main/SampleAppVersion.json"
-        var result: Boolean
-        GlobalScope.launch(Dispatchers.IO) {
-            val jsonText = httpGet(apkVersionUrl)
-            val apkVersionJson = JSONObject(jsonText)
-            Log.i("info", jsonText)
-            result = apkVersionJson.getLong("latestVersionCode") == currentVersion
-        }
-        return result
-
-    }
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
