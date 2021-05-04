@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.util.Log
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.example.sample.BuildConfig
@@ -28,11 +29,13 @@ class DownloadController(private val context: Context, private val url: String) 
             context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString() + "/"
         destination += FILE_NAME
         val uri = Uri.parse("$FILE_BASE_PATH$destination")
+        Log.i("info","Download path ****** $FILE_BASE_PATH$destination")
         val file = File(destination)
         if (file.exists()) file.delete()
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val downloadUri = Uri.parse(url)
         val request = DownloadManager.Request(downloadUri)
+
         request.setMimeType(MIME_TYPE)
         request.setTitle(context.getString(R.string.title_file_download))
         request.setDescription(context.getString(R.string.downloading))
@@ -41,6 +44,7 @@ class DownloadController(private val context: Context, private val url: String) 
         showInstallOption(destination, uri)
         // Enqueue a new download and same the referenceId
         downloadManager.enqueue(request)
+        Log.i("info","Downloading..... ")
         Toast.makeText(context, context.getString(R.string.downloading), Toast.LENGTH_LONG)
             .show()
     }
